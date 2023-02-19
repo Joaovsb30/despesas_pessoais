@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
-class Transaction{
+class TransactionApp{
   final String? id;
   final String? title;
   final double? value;
   final DateTime? date;
 
-  Transaction({
+  TransactionApp({
    @required this.id,
    @required this.title,
    @required this.value,

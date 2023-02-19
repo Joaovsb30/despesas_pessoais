@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../models/transaction.dart';
+import '../models/transactionApp.dart';
 
 
 class SumWeek extends StatelessWidget {
-  final List<Transaction> recentTransaction;
+  final List<TransactionApp> recentTransaction;
   const SumWeek(this.recentTransaction, {Key? key}) : super(key: key);
 
   double get _weekTotalValue {

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/transaction.dart';
+import '../models/transactionApp.dart';
 import 'chart_bar.dart';
 
 
 
 class Chart extends StatelessWidget {
-  final List<Transaction> recentTransaction;
+  final List<TransactionApp> recentTransaction;
 
   const Chart(this.recentTransaction, {Key? key}) : super(key: key);
 
-  List<Map<String, Object>> get groupedTransactions {
+  List<Map<String, dynamic>> get groupedTransactions {
     return List.generate(7, (index) {
       final weekDay = DateTime.now().subtract(
         Duration(days: index),

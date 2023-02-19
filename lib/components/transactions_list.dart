@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/transaction.dart';
+import '../models/transactionApp.dart';
 import 'package:intl/intl.dart';
 
 class TransactionList extends StatelessWidget {
-  final List<Transaction> transactions;
+  final List<TransactionApp> transactions;
   final void Function(String) onRemove;
 
   const TransactionList(this.transactions, this.onRemove, {Key? key}) : super(key: key);

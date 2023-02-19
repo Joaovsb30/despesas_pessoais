@@ -4,16 +4,9 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'components/transaction_form.dart';
 import 'components/transactions_list.dart';
-import 'models/transaction.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'models/transactionApp.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+void main() {
 
   runApp(ExpensesApp());}
 
@@ -44,23 +37,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _transactions = [];
+  List<TransactionApp> _transactions = [];
   bool _showChart = false;
 
-
-  List<Transaction> get _recentTransactions {
+  List<TransactionApp> get _recentTransactions {
     return _transactions.where((tr){
       return tr.date!.isAfter(DateTime.now().subtract(Duration(days: 7)));
     }).toList();
   }
 
-  _addTransaction(String title, double value, DateTime date){
-    final newTransaction = Transaction(
+  _addTransaction(String title, double value, DateTime date) {
+    final newTransaction = TransactionApp(
       id: Random().nextDouble().toString(),
       date: date,
       title: title,
       value: value,
     );
+
     setState(() {
       _transactions.add(newTransaction);
     });
