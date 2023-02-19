@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "612365741681",
+    "project_id": "gastometro-f677e",
+    "storage_bucket": "gastometro-f677e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612365741681:android:018688bbcfab097b4a75d0",
+        "android_client_info": {
+          "package_name": "com.example.despesas_pessoais"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "612365741681-f9dk2hti5c8k48oc5dr91tquttl6taub.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABNyJGibA8EHXhaeCVzPig0Ya9eW7y2Hc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "612365741681-f9dk2hti5c8k48oc5dr91tquttl6taub.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
