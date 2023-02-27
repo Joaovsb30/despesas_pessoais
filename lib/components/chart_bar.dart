@@ -5,12 +5,14 @@ class ChartBar extends StatelessWidget {
   final double? value;
   final double? percentage;
 
-  const ChartBar({
+   ChartBar({
     this.label,
     this.value,
     this.percentage,
     Key? key,
   }) : super(key: key);
+
+  final tema = ThemeData();
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class ChartBar extends StatelessWidget {
                         heightFactor: percentage,
                         child: Container(
                           decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
+                              color: Colors.purple,
                               borderRadius: BorderRadius.circular(5)
                           ),
                         ),

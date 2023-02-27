@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/transactionApp.dart';
 
 
@@ -24,7 +23,7 @@ class SumWeek extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Gasto total dos últimos 7 dias: R\$ ${_weekTotalValue.toStringAsFixed(2)}',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purple),),
 
         ],
       );

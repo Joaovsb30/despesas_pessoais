@@ -57,39 +57,41 @@ class TransactionList extends StatelessWidget {
                           ],
                     ));
                   },
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.purple,
-                      radius: 35,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
+                  child: SingleChildScrollView(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.purple,
+                        radius: 35,
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: FittedBox(
-                            alignment: Alignment.center,
-                            fit: BoxFit.contain,
-                            child: Text(
-                              tr.value!.toStringAsFixed(2),
-                              style:TextStyle(
-                                color: Colors.white,
+                          padding: const EdgeInsets.all(6),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: FittedBox(
+                              alignment: Alignment.center,
+                              fit: BoxFit.contain,
+                              child: Text(
+                                tr.value!.toStringAsFixed(2),
+                                style:TextStyle(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
+                      title: Text(
+                        tr.title!,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      subtitle: Text(
+                        DateFormat('d/MM/y').format(tr.date!),
+                      ),
+                      // trailing: IconButton(
+                      //   icon: Icon(Icons.delete),
+                      //   color: Theme.of(context).colorScheme.primary,
+                      //   onPressed: () => onRemove(tr.id!),
+                      // ) ,
                     ),
-                    title: Text(
-                      tr.title!,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    subtitle: Text(
-                      DateFormat('d/MM/y').format(tr.date!),
-                    ),
-                    // trailing: IconButton(
-                    //   icon: Icon(Icons.delete),
-                    //   color: Theme.of(context).colorScheme.primary,
-                    //   onPressed: () => onRemove(tr.id!),
-                    // ) ,
                   ),
                 ),
               );

@@ -1,5 +1,7 @@
+import 'adaptative_button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'adaptative_textField.dart';
 
 class TransactionForm extends StatefulWidget {
   final void Function(String, double, DateTime) onSubmit;
@@ -56,22 +58,34 @@ class _TransactionFormState extends State<TransactionForm> {
           bottom: 10 + MediaQuery.of(context).viewInsets.bottom),
           child: Column(
             children: [
-              TextField(
-                controller: _titleController,
-                onSubmitted: (_) => _submitForm(),
-                decoration: const InputDecoration(
-                  labelText: 'Título',
-                ),
+              AdaptativeTextField(
+                  controller: _titleController,
+                  onSubmited: _submitForm,
+                  decimalChange: false,
+                  labelText: 'Título'
               ),
-              TextField(
-                controller: _valueController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onSubmitted: (_) => _submitForm(),
-                decoration: const InputDecoration(
-                  labelText: 'Valor (R\$)',
-                ),
+              AdaptativeTextField(
+                  controller: _valueController,
+                  onSubmited: _submitForm,
+                  decimalChange: true,
+                  labelText: 'Valor (R\$)'
               ),
+              // TextField(
+              //   controller: _titleController,
+              //   onSubmitted: (_) => _submitForm(),
+              //   decoration: const InputDecoration(
+              //     labelText: 'Título',
+              //   ),
+              // ),
+              // TextField(
+              //   controller: _valueController,
+              //   keyboardType:
+              //       const TextInputType.numberWithOptions(decimal: true),
+              //   onSubmitted: (_) => _submitForm(),
+              //   decoration: const InputDecoration(
+              //     labelText: 'Valor (R\$)',
+              //   ),
+              // ),
               SizedBox(
                 height: 70,
                 child: Row(
@@ -98,15 +112,10 @@ class _TransactionFormState extends State<TransactionForm> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  ElevatedButton(
-                    child: Text(
-                      'Nova Transação',
-                      style: TextStyle(
-                        color: Colors.white
-                      ),
-                    ),
+                  AdaptativeButton(
+                    label: 'Nova Transação',
                     onPressed: _submitForm,
-                  ),
+                  )
                 ],
               ),
             ],
