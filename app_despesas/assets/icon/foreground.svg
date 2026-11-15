@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<g transform="translate(512 512) scale(0.72) translate(-530 -566)">
+  <defs>
+    <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD866"/><stop offset="1" stop-color="#F5A623"/>
+    </linearGradient>
+    <linearGradient id="coin2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE7A3"/><stop offset="1" stop-color="#FFC24A"/>
+    </linearGradient>
+    <linearGradient id="wallet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F1ECFF"/>
+    </linearGradient>
+  </defs>
+  <!-- moeda de trás -->
+  <circle cx="420" cy="395" r="118" fill="url(#coin2)"/>
+  <circle cx="420" cy="395" r="88" fill="none" stroke="#F5B43C" stroke-width="14"/>
+  <!-- moeda da frente com cifrão -->
+  <circle cx="600" cy="345" r="150" fill="url(#coin)"/>
+  <circle cx="600" cy="345" r="114" fill="none" stroke="#E8941A" stroke-width="16"/>
+  <text x="600" y="400" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, Helvetica, sans-serif"
+        font-weight="900" font-size="170" fill="#B86E00">$</text>
+  <!-- sombra da carteira -->
+  <rect x="236" y="452" width="560" height="372" rx="78" fill="#000" opacity="0.18"/>
+  <!-- carteira -->
+  <rect x="226" y="430" width="572" height="372" rx="78" fill="url(#wallet)"/>
+  <rect x="226" y="430" width="572" height="70" rx="35" fill="#E4DBFF"/>
+  <!-- bolso do fecho -->
+  <rect x="598" y="560" width="236" height="140" rx="56" fill="#7C5CE0"/>
+  <circle cx="676" cy="630" r="28" fill="#FFFFFF"/>
+</g></svg>
