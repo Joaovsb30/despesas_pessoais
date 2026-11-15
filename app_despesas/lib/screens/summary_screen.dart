@@ -24,7 +24,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final theme = Theme.of(context);
     final store = widget.store;
     final expenses = store.forMonth(_month);
-    final total = ExpenseStore.total(expenses);
+    final total = ExpenseStore.total(ExpenseStore.onlyExpenses(expenses));
+    final balance = ExpenseStore.balance(expenses);
     final categories = ExpenseStore.byCategory(expenses);
     final history = store.monthlyTotals(_month, 6);
     final maxMonth = history.fold<int>(0, (m, e) => e.value > m ? e.value : m);
@@ -44,9 +45,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _Stat(label: 'Total', value: formatCents(total)),
+                _Stat(label: 'Gastos', value: formatCents(total)),
                 _Stat(label: 'Média/dia', value: formatCents(daysElapsed == 0 ? 0 : total ~/ daysElapsed)),
-                _Stat(label: 'Gastos', value: '${expenses.length}'),
+                _Stat(label: 'Saldo', value: formatCents(balance)),
               ],
             ),
           ),
@@ -75,7 +76,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   ),
           ),
           _Section(
-            title: 'Últimos 6 meses',
+            title: 'Gastos nos últimos 6 meses',
             child: SizedBox(
               height: 180,
               child: Row(

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'data/expense_repository.dart';
 import 'screens/home_screen.dart';
 import 'state/expense_store.dart';
+import 'utils/app_lock.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +19,9 @@ Future<void> main() async {
 
 class ExpensesApp extends StatelessWidget {
   final ExpenseStore store;
+  final DeviceAuth? auth;
 
-  const ExpensesApp({super.key, required this.store});
+  const ExpensesApp({super.key, required this.store, this.auth});
 
   ThemeData _theme(Brightness brightness) => ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -40,6 +42,9 @@ class ExpensesApp extends StatelessWidget {
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: HomeScreen(store: store),
+      // Fica acima do Navigator para cobrir todas as telas quando bloqueado.
+      builder: (context, child) =>
+          LockGate(store: store, auth: auth ?? DeviceAuth(), child: child!),
     );
   }
 }

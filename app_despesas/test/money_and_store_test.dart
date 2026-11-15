@@ -85,6 +85,6 @@ void main() {
     final csv = expensesToCsv([
       Expense(title: 'Pizza; refri', amountCents: 4590, date: DateTime(2026, 11, 1), categoryId: 'lazer', note: 'com "amigos"'),
     ]);
-    expect(csv.split('\n')[1], '01/11/2026;"Pizza; refri";Lazer;45,90;"com ""amigos"""');
+    expect(csv.split('\n')[1], '01/11/2026;Despesa;"Pizza; refri";Lazer;45,90;"com ""amigos"""');
   });
 }

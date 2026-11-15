@@ -4,12 +4,18 @@ App Android para controlar gastos pessoais. **Funciona 100% offline**: os dados 
 
 ## O que faz
 
-- Lançar gastos com valor, descrição, data, categoria e observação
-- Editar (toque no gasto) e excluir (arraste para a esquerda, com "Desfazer")
-- Navegar mês a mês, com total do mês e comparação com o mês anterior
-- Orçamento mensal com barra de progresso (menu ⋮ → Orçamento mensal)
-- Tela de resumo: total, média por dia, gastos por categoria e gráfico dos últimos 6 meses
-- Exportar tudo em CSV para backup ou abrir no Excel/Sheets (menu ⋮ → Exportar CSV)
+- Lançar **gastos e receitas** com valor, descrição, data, categoria e observação
+- **Saldo do mês** (receitas − gastos) e comparação com o mês anterior
+- **Lançamentos recorrentes** (aluguel, assinaturas, salário): criados sozinhos todo mês
+- **Compras parceladas**: informe o total e o número de parcelas, uma por mês
+- **Orçamento geral e por categoria**, com alerta na tela inicial quando um limite estoura
+- **Busca** em todos os meses, ignorando acentos
+- Editar (toque) e excluir (arraste para a esquerda, com "Desfazer")
+- Resumo: gastos, média por dia, saldo, gastos por categoria e gráfico de 6 meses
+- **Backup**: exportar e importar CSV (abre no Excel/Sheets)
+- **Bloqueio com digital, rosto ou PIN** do celular
+
+Tudo em Mais (⋮): Orçamentos, Recorrentes, Bloqueio e Backup.
 
 ## Como pegar o APK
 

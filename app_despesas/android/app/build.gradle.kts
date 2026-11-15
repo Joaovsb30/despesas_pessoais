@@ -54,3 +54,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Tema AppCompat usado pelo diálogo de biometria
+    implementation("androidx.appcompat:appcompat:1.7.0")
+}

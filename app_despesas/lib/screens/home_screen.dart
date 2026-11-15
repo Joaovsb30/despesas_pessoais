@@ -4,10 +4,11 @@ import 'package:intl/intl.dart';
 import '../models/category.dart';
 import '../models/expense.dart';
 import '../state/expense_store.dart';
-import '../utils/csv_export.dart';
 import '../utils/money.dart';
 import '../widgets/common.dart';
 import 'expense_form_screen.dart';
+import 'search_screen.dart';
+import 'settings_screen.dart';
 import 'summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,18 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
   ExpenseStore get store => widget.store;
 
   Future<void> _openForm([Expense? expense]) async {
+    final now = DateTime.now();
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ExpenseFormScreen(
         store: store,
         expense: expense,
-        initialDate: _defaultDateForMonth(),
+        initialDate: monthOf(now) == _month ? now : _month,
       ),
     ));
-  }
-
-  DateTime _defaultDateForMonth() {
-    final now = DateTime.now();
-    return monthOf(now) == _month ? now : _month;
   }
 
   Future<void> _delete(Expense e) async {
@@ -50,108 +47,55 @@ class _HomeScreenState extends State<HomeScreen> {
       ));
   }
 
-  Future<void> _editBudget() async {
-    final controller = TextEditingController(
-      text: store.monthlyBudgetCents == null ? '' : centsToInput(store.monthlyBudgetCents!),
-    );
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Orçamento mensal'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            prefixText: 'R\$ ',
-            hintText: 'Ex.: 3000,00',
-            helperText: 'Deixe vazio para não usar orçamento',
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-    if (result == null) return;
-    final cents = parseMoney(result);
-    await store.setMonthlyBudget(cents != null && cents > 0 ? cents : null);
-  }
-
-  Future<void> _export() async {
-    if (store.expenses.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nenhum gasto para exportar.')));
-      return;
-    }
-    await shareCsv(store.expenses);
-  }
+  void _push(Widget screen) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final monthExpenses = store.forMonth(_month);
+        final monthItems = store.forMonth(_month);
         return Scaffold(
           appBar: AppBar(
             title: const Text('Despesas'),
             actions: [
               IconButton(
+                tooltip: 'Buscar',
+                icon: const Icon(Icons.search),
+                onPressed: () => _push(SearchScreen(store: store, onOpen: _openForm)),
+              ),
+              IconButton(
                 tooltip: 'Resumo',
                 icon: const Icon(Icons.insights),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => SummaryScreen(store: store, month: _month),
-                )),
+                onPressed: () => _push(SummaryScreen(store: store, month: _month)),
               ),
-              PopupMenuButton<String>(
-                onSelected: (v) => v == 'budget' ? _editBudget() : _export(),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: 'budget',
-                    child: ListTile(leading: Icon(Icons.savings), title: Text('Orçamento mensal')),
-                  ),
-                  PopupMenuItem(
-                    value: 'export',
-                    child: ListTile(leading: Icon(Icons.ios_share), title: Text('Exportar CSV (backup)')),
-                  ),
-                ],
+              IconButton(
+                tooltip: 'Mais',
+                icon: const Icon(Icons.more_vert),
+                onPressed: () => _push(SettingsScreen(store: store)),
               ),
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _openForm(),
             icon: const Icon(Icons.add),
-            label: const Text('Novo gasto'),
+            label: const Text('Novo'),
           ),
           body: !store.loaded
               ? const Center(child: CircularProgressIndicator())
               : CustomScrollView(
                   slivers: [
                     SliverToBoxAdapter(
-                      child: MonthSelector(
-                        month: _month,
-                        onChanged: (m) => setState(() => _month = m),
-                      ),
+                      child: MonthSelector(month: _month, onChanged: (m) => setState(() => _month = m)),
                     ),
                     SliverToBoxAdapter(
-                      child: _SummaryCard(
-                        store: store,
-                        month: _month,
-                        monthExpenses: monthExpenses,
-                      ),
+                      child: _SummaryCard(store: store, month: _month, items: monthItems),
                     ),
-                    if (monthExpenses.isEmpty)
-                      const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _EmptyState(),
-                      )
+                    if (monthItems.isEmpty)
+                      const SliverFillRemaining(hasScrollBody: false, child: _EmptyState())
                     else
-                      ..._buildDayGroups(monthExpenses),
+                      ..._buildDayGroups(monthItems),
                     const SliverToBoxAdapter(child: SizedBox(height: 96)),
                   ],
                 ),
@@ -160,9 +104,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Widget> _buildDayGroups(List<Expense> expenses) {
+  /// Só gastos: total gasto. Com receita no dia: saldo com sinal.
+  static String _dayTotal(List<Expense> day) {
+    if (!day.any((e) => e.isIncome)) return formatCents(ExpenseStore.total(day));
+    final b = ExpenseStore.balance(day);
+    return '${b >= 0 ? '+' : '−'} ${formatCents(b.abs())}';
+  }
+
+  List<Widget> _buildDayGroups(List<Expense> items) {
     final groups = <DateTime, List<Expense>>{};
-    for (final e in expenses) {
+    for (final e in items) {
       groups.putIfAbsent(e.date, () => []).add(e);
     }
     final dayFormat = DateFormat("EEE, d 'de' MMM");
@@ -180,81 +131,58 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary),
                   ),
                 ),
-                Text(formatCents(ExpenseStore.total(entry.value)),
-                    style: theme.textTheme.labelLarge),
+                Text(_dayTotal(entry.value), style: theme.textTheme.labelLarge),
               ],
             ),
           ),
         ),
         SliverList.list(
-          children: [for (final e in entry.value) _ExpenseTile(e, onTap: () => _openForm(e), onDelete: () => _delete(e))],
+          children: [
+            for (final e in entry.value)
+              Dismissible(
+                key: ValueKey(e.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: theme.colorScheme.errorContainer,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 24),
+                  child: Icon(Icons.delete, color: theme.colorScheme.onErrorContainer),
+                ),
+                onDismissed: (_) => _delete(e),
+                child: ExpenseTile(e, onTap: () => _openForm(e)),
+              ),
+          ],
         ),
       ],
     ];
   }
 }
 
-class _ExpenseTile extends StatelessWidget {
-  final Expense expense;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-
-  const _ExpenseTile(this.expense, {required this.onTap, required this.onDelete});
-
-  @override
-  Widget build(BuildContext context) {
-    final category = ExpenseCategory.byId(expense.categoryId);
-    final theme = Theme.of(context);
-    return Dismissible(
-      key: ValueKey(expense.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: theme.colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: Icon(Icons.delete, color: theme.colorScheme.onErrorContainer),
-      ),
-      onDismissed: (_) => onDelete(),
-      child: ListTile(
-        onTap: onTap,
-        leading: CategoryAvatar(category),
-        title: Text(expense.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          expense.note?.isNotEmpty == true ? '${category.label} · ${expense.note}' : category.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Text(
-          formatCents(expense.amountCents),
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-}
-
 class _SummaryCard extends StatelessWidget {
   final ExpenseStore store;
   final DateTime month;
-  final List<Expense> monthExpenses;
+  final List<Expense> items;
 
-  const _SummaryCard({required this.store, required this.month, required this.monthExpenses});
+  const _SummaryCard({required this.store, required this.month, required this.items});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final total = ExpenseStore.total(monthExpenses);
-    final previous = ExpenseStore.total(store.forMonth(DateTime(month.year, month.month - 1)));
+    final on = scheme.onPrimaryContainer;
+    final spent = ExpenseStore.total(ExpenseStore.onlyExpenses(items));
+    final income = ExpenseStore.total(ExpenseStore.onlyIncome(items));
+    final balance = income - spent;
+    final previous = ExpenseStore.total(
+        ExpenseStore.onlyExpenses(store.forMonth(DateTime(month.year, month.month - 1))));
     final budget = store.monthlyBudgetCents;
-    final top = ExpenseStore.byCategory(monthExpenses).take(3).toList();
+    final over = store.overBudgetCategories(month);
+    final top = ExpenseStore.byCategory(items).take(3).toList();
 
     String? comparison;
     if (previous > 0) {
-      final pct = ((total - previous) / previous * 100).round();
-      comparison = pct == 0
-          ? 'Igual ao mês anterior'
-          : '${pct > 0 ? '+' : ''}$pct% vs. mês anterior';
+      final pct = ((spent - previous) / previous * 100).round();
+      comparison = pct == 0 ? 'Igual ao mês anterior' : '${pct > 0 ? '+' : ''}$pct% vs. mês anterior';
     }
 
     return Card(
@@ -265,40 +193,70 @@ class _SummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Total do mês', style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer)),
+            Text('Gastos do mês', style: theme.textTheme.labelLarge?.copyWith(color: on)),
             const SizedBox(height: 4),
             Text(
-              formatCents(total),
+              formatCents(spent),
               key: const Key('month-total'),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: scheme.onPrimaryContainer,
-              ),
+              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: on),
             ),
             if (comparison != null)
-              Text(comparison, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onPrimaryContainer)),
+              Text(comparison, style: theme.textTheme.bodySmall?.copyWith(color: on)),
+            if (income > 0) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _MiniStat(label: 'Receitas', value: formatCents(income))),
+                  Expanded(
+                    child: _MiniStat(
+                      key: const Key('month-balance'),
+                      label: 'Saldo',
+                      value: formatCents(balance),
+                      color: balance < 0 ? scheme.error : null,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (budget != null) ...[
               const SizedBox(height: 16),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: (total / budget).clamp(0, 1).toDouble(),
+                  value: (spent / budget).clamp(0, 1).toDouble(),
                   minHeight: 8,
-                  color: total > budget ? scheme.error : scheme.primary,
+                  color: spent > budget ? scheme.error : scheme.primary,
                   backgroundColor: scheme.surface.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                total > budget
-                    ? 'Passou ${formatCents(total - budget)} do orçamento de ${formatCents(budget)}'
-                    : 'Restam ${formatCents(budget - total)} de ${formatCents(budget)}',
+                spent > budget
+                    ? 'Passou ${formatCents(spent - budget)} do orçamento de ${formatCents(budget)}'
+                    : 'Restam ${formatCents(budget - spent)} de ${formatCents(budget)}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: total > budget ? scheme.error : scheme.onPrimaryContainer,
+                  color: spent > budget ? scheme.error : on,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
+            for (final o in over)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 18, color: scheme.error),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${ExpenseCategory.byId(o.key).label}: ${formatCents(o.value.$1)} '
+                        'de ${formatCents(o.value.$2)} (limite estourado)',
+                        style: theme.textTheme.bodySmall?.copyWith(color: scheme.error, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (top.isNotEmpty) ...[
               const SizedBox(height: 12),
               Wrap(
@@ -308,7 +266,8 @@ class _SummaryCard extends StatelessWidget {
                   for (final t in top)
                     Chip(
                       visualDensity: VisualDensity.compact,
-                      avatar: Icon(ExpenseCategory.byId(t.key).icon, size: 16, color: ExpenseCategory.byId(t.key).color),
+                      avatar: Icon(ExpenseCategory.byId(t.key).icon,
+                          size: 16, color: ExpenseCategory.byId(t.key).color),
                       label: Text('${ExpenseCategory.byId(t.key).label} ${formatCents(t.value)}'),
                     ),
                 ],
@@ -317,6 +276,28 @@ class _SummaryCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _MiniStat({super.key, required this.label, required this.value, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final on = theme.colorScheme.onPrimaryContainer;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: theme.textTheme.labelMedium?.copyWith(color: on)),
+        Text(value,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: color ?? on)),
+      ],
     );
   }
 }
@@ -334,9 +315,9 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.receipt_long, size: 64, color: theme.colorScheme.outline),
           const SizedBox(height: 12),
-          Text('Nenhum gasto neste mês', style: theme.textTheme.titleMedium),
+          Text('Nenhum lançamento neste mês', style: theme.textTheme.titleMedium),
           const SizedBox(height: 4),
-          Text('Toque em "Novo gasto" para começar.',
+          Text('Toque em "Novo" para começar.',
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline)),
         ],
       ),

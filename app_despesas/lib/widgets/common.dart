@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/category.dart';
+import '../models/expense.dart';
+import '../utils/money.dart';
 
 String capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
@@ -115,4 +117,78 @@ class ShareBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Linha de um lançamento. Receitas aparecem em verde com "+".
+class ExpenseTile extends StatelessWidget {
+  final Expense expense;
+  final VoidCallback onTap;
+  final bool showDate;
+
+  const ExpenseTile(this.expense, {super.key, required this.onTap, this.showDate = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final category = ExpenseCategory.byId(expense.categoryId);
+    final theme = Theme.of(context);
+    final parts = [
+      if (showDate) DateFormat('dd/MM/yy').format(expense.date),
+      category.label,
+      if (expense.note?.isNotEmpty == true) expense.note!,
+    ];
+    return ListTile(
+      onTap: onTap,
+      leading: CategoryAvatar(category),
+      title: Row(
+        children: [
+          Flexible(child: Text(expense.title, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          if (expense.recurringId != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.autorenew, size: 14, color: theme.colorScheme.outline),
+          ],
+        ],
+      ),
+      subtitle: Text(parts.join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: Text(
+        '${expense.isIncome ? '+ ' : ''}${formatCents(expense.amountCents)}',
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: expense.isIncome ? incomeColor(context) : null,
+        ),
+      ),
+    );
+  }
+}
+
+Color incomeColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+
+/// Pede um valor em reais. Retorna centavos, null para "remover", ou cancela (sem chamar [onSave]).
+Future<void> showMoneyDialog(
+  BuildContext context, {
+  required String title,
+  int? initialCents,
+  String helper = 'Deixe vazio para remover',
+  required Future<void> Function(int? cents) onSave,
+}) async {
+  final controller = TextEditingController(text: initialCents == null ? '' : centsToInput(initialCents));
+  final result = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(prefixText: 'R\$ ', hintText: 'Ex.: 500,00', helperText: helper),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Salvar')),
+      ],
+    ),
+  );
+  if (result == null) return;
+  final cents = parseMoney(result);
+  await onSave(cents != null && cents > 0 ? cents : null);
 }
