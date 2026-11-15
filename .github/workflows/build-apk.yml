@@ -4,6 +4,7 @@ on:
   push:
     tags: ["v*"]
     branches: ["**"]
+    paths: ["app_despesas/**", ".github/workflows/build-apk.yml"]
   workflow_dispatch:
 
 permissions:
@@ -12,6 +13,9 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app_despesas
     steps:
       - uses: actions/checkout@v4
 
@@ -37,10 +41,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: despesas-apk
-          path: despesas.apk
+          path: app_despesas/despesas.apk
 
       - name: Publicar release (só em tags v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: despesas.apk
+          files: app_despesas/despesas.apk
