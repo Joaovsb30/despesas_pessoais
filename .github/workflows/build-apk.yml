@@ -30,6 +30,18 @@ jobs:
           channel: stable
           cache: true
 
+      # Algum plugin compila código nativo com CMake. Instalar antes, com novas
+      # tentativas, evita falha quando o download automático vem corrompido.
+      - name: Instalar CMake
+        run: |
+          for i in 1 2 3; do
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "cmake;3.22.1" > /dev/null && exit 0
+            echo "Tentativa $i falhou, tentando de novo..."
+            rm -rf "$ANDROID_HOME/cmake/3.22.1"
+            sleep 15
+          done
+          exit 1
+
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
