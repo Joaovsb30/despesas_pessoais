@@ -24,13 +24,12 @@ Tudo em Mais (⋮): Orçamentos, Recorrentes, Bloqueio e Backup.
 
 ## Como pegar o APK
 
-O GitHub Actions compila o APK a cada push (`.github/workflows/build-apk.yml`, na raiz do repositório):
+Cada push gera um APK novo no GitHub Actions e publica em **Releases**. No celular, abra direto:
 
-1. Abra a aba **Actions** do repositório → execução mais recente de **Gerar APK**
-2. Baixe o artefato **despesas-apk** (vem em um .zip com o `despesas.apk` dentro)
-3. Passe o `despesas.apk` para o celular e instale (o Android vai pedir para permitir "instalar apps desconhecidos")
+**https://github.com/Joaovsb30/despesas_pessoais/releases/latest/download/despesas.apk**
 
-Para gerar uma Release com o APK para download direto: crie uma tag `v*` (ex.: `git tag v2.0.0 && git push origin v2.0.0`).
+O Android vai pedir para permitir "instalar apps desconhecidos" na primeira vez.
+(O APK também fica nos artefatos de cada execução em **Actions → Gerar APK**.)
 
 ### Atualizações sem perder dados
 

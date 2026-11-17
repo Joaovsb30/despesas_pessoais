@@ -55,7 +55,28 @@ jobs:
           name: despesas-apk
           path: app_despesas/despesas.apk
 
-      - name: Publicar release (só em tags v*)
+      # Link fixo para baixar no celular, sem .zip:
+      # https://github.com/<dono>/<repo>/releases/latest/download/despesas.apk
+      - name: Atualizar a tag da versão mais recente
+        if: github.ref_type == 'branch'
+        working-directory: .
+        run: |
+          git tag -f apk-mais-recente
+          git push -f origin apk-mais-recente
+
+      - name: Publicar APK mais recente
+        if: github.ref_type == 'branch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-mais-recente
+          name: Despesas (versão mais recente)
+          body: |
+            APK gerado automaticamente a partir do commit ${{ github.sha }}.
+            Baixe o **despesas.apk** abaixo e instale por cima da versão anterior (não desinstale, para não perder os dados).
+          files: app_despesas/despesas.apk
+          make_latest: true
+
+      - name: Publicar release (tags v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
