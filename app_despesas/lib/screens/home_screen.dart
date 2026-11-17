@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/category.dart';
 import '../models/expense.dart';
+import '../receipts/receipt_import.dart';
+import '../receipts/receipt_service.dart';
 import '../state/expense_store.dart';
 import '../utils/money.dart';
 import '../widgets/common.dart';
@@ -13,8 +17,10 @@ import 'summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final ExpenseStore store;
+  final ReceiptReader? receiptReader;
+  final ReceiptInbox? receiptInbox;
 
-  const HomeScreen({super.key, required this.store});
+  const HomeScreen({super.key, required this.store, this.receiptReader, this.receiptInbox});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,17 +29,121 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   DateTime _month = monthOf(DateTime.now());
 
+  StreamSubscription<List<SharedReceipt>>? _shareSub;
+  bool _importing = false;
+  final _pending = <SharedReceipt>[];
+
   ExpenseStore get store => widget.store;
 
-  Future<void> _openForm([Expense? expense]) async {
+  @override
+  void initState() {
+    super.initState();
+    final inbox = widget.receiptInbox;
+    if (inbox != null) {
+      inbox.initial().then(_onShared);
+      _shareSub = inbox.stream.listen(_onShared);
+    }
+    final reader = widget.receiptReader;
+    if (reader != null) {
+      store.ensureLoaded().then((_) =>
+          reader.cleanup(store.expenses.map((e) => e.receiptPath).whereType<String>().toSet()));
+    }
+  }
+
+  @override
+  void dispose() {
+    _shareSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _openForm([Expense? expense, Expense? draft, String? notice]) async {
     final now = DateTime.now();
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ExpenseFormScreen(
         store: store,
         expense: expense,
+        draft: draft,
+        notice: notice,
         initialDate: monthOf(now) == _month ? now : _month,
       ),
     ));
+  }
+
+  // ------------------------------------------------------------ comprovantes
+
+  void _onShared(List<SharedReceipt> items) {
+    if (items.isEmpty || widget.receiptReader == null) return;
+    widget.receiptInbox?.markHandled();
+    _pending.addAll(items);
+    _drainShared();
+  }
+
+  Future<void> _drainShared() async {
+    final reader = widget.receiptReader!;
+    while (_pending.isNotEmpty && mounted && !_importing) {
+      final item = _pending.removeAt(0);
+      await _runImport(() => item.isText
+          ? reader.scanText(item.pathOrText)
+          : reader.scanFile(item.pathOrText, mimeType: item.mimeType));
+    }
+  }
+
+  Future<void> _scanReceipt() async {
+    final reader = widget.receiptReader;
+    if (reader == null) return;
+    final scan = await pickReceiptSource(context, reader);
+    if (scan != null && mounted) await _runImport(scan);
+  }
+
+  Future<void> _runImport(Future<ReceiptScan> Function() scan) async {
+    _importing = true;
+    final nav = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Expanded(child: Text('Lendo comprovante...')),
+            ],
+          ),
+        ),
+      ),
+    );
+    final outcome = await importReceipt(store, scan);
+    nav.pop();
+    _importing = false;
+    if (!mounted) return;
+
+    switch (outcome) {
+      case ReceiptAdded(:final expense):
+        setState(() => _month = monthOf(expense.date));
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            duration: const Duration(seconds: 6),
+            content: Text(describeAdded(expense)),
+            action: SnackBarAction(
+              label: 'Editar',
+              onPressed: () {
+                final current = store.expenses.where((e) => e.id == expense.id).firstOrNull;
+                if (current != null) _openForm(current);
+              },
+            ),
+          ));
+      case ReceiptNeedsReview(:final draft, :final reason):
+        await _openForm(null, draft, reason);
+      case ReceiptFailed():
+        messenger.showSnackBar(const SnackBar(
+          content: Text('Não consegui ler esse arquivo. Tente um print ou PDF do comprovante.'),
+        ));
+    }
+    if (_pending.isNotEmpty) _drainShared();
   }
 
   Future<void> _delete(Expense e) async {
@@ -65,6 +175,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.search),
                 onPressed: () => _push(SearchScreen(store: store, onOpen: _openForm)),
               ),
+              if (widget.receiptReader != null)
+                IconButton(
+                  tooltip: 'Ler comprovante',
+                  icon: const Icon(Icons.document_scanner_outlined),
+                  onPressed: _scanReceipt,
+                ),
               IconButton(
                 tooltip: 'Resumo',
                 icon: const Icon(Icons.insights),

@@ -41,7 +41,7 @@ class SqfliteExpenseRepository implements ExpenseRepository {
   Future<Database> get _database async {
     return _db ??= await openDatabase(
       p.join(await getDatabasesPath(), 'despesas.db'),
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE expenses(
@@ -52,7 +52,8 @@ class SqfliteExpenseRepository implements ExpenseRepository {
             category TEXT NOT NULL,
             note TEXT,
             type TEXT NOT NULL DEFAULT 'expense',
-            recurring_id INTEGER
+            recurring_id INTEGER,
+            receipt_path TEXT
           )''');
         await db.execute('CREATE INDEX idx_expenses_date ON expenses(date)');
         await db.execute('CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT)');
@@ -63,6 +64,9 @@ class SqfliteExpenseRepository implements ExpenseRepository {
           await db.execute("ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'");
           await db.execute('ALTER TABLE expenses ADD COLUMN recurring_id INTEGER');
           await _createV2Tables(db);
+        }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE expenses ADD COLUMN receipt_path TEXT');
         }
       },
     );

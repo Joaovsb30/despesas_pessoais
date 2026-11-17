@@ -13,6 +13,9 @@ class Expense {
   /// Regra recorrente que gerou este lançamento, se houver.
   final int? recurringId;
 
+  /// Imagem do comprovante guardada no celular, se houver.
+  final String? receiptPath;
+
   Expense({
     this.id,
     required this.title,
@@ -22,6 +25,7 @@ class Expense {
     this.note,
     this.isIncome = false,
     this.recurringId,
+    this.receiptPath,
   }) : date = DateTime(date.year, date.month, date.day);
 
   /// Valor com sinal: negativo para despesa, positivo para receita.
@@ -36,6 +40,7 @@ class Expense {
     String? note,
     bool? isIncome,
     int? recurringId,
+    String? receiptPath,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class Expense {
       note: note ?? this.note,
       isIncome: isIncome ?? this.isIncome,
       recurringId: recurringId ?? this.recurringId,
+      receiptPath: receiptPath ?? this.receiptPath,
     );
   }
 
@@ -58,6 +64,7 @@ class Expense {
         'note': note,
         'type': isIncome ? 'income' : 'expense',
         'recurring_id': recurringId,
+        'receipt_path': receiptPath,
       };
 
   factory Expense.fromMap(Map<String, Object?> map) => Expense(
@@ -69,5 +76,6 @@ class Expense {
         note: map['note'] as String?,
         isIncome: map['type'] == 'income',
         recurringId: map['recurring_id'] as int?,
+        receiptPath: map['receipt_path'] as String?,
       );
 }

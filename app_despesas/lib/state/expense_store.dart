@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../data/expense_repository.dart';
@@ -53,10 +55,28 @@ class ExpenseStore extends ChangeNotifier {
 
   // ---------------------------------------------------------------- lançamentos
 
-  Future<void> add(Expense e) async {
-    _expenses.add(await _repo.insert(e));
+  Future<Expense> add(Expense e) async {
+    final saved = await _repo.insert(e);
+    _expenses.add(saved);
     _sort();
     notifyListeners();
+    return saved;
+  }
+
+  /// Já existe um lançamento com mesma descrição, valor e data? (ex.: comprovante enviado 2 vezes)
+  bool hasDuplicate(Expense e) => _expenses.any((x) =>
+      x.amountCents == e.amountCents && x.date == e.date && x.title == e.title && x.isIncome == e.isIncome);
+
+  /// Espera o banco terminar de carregar.
+  Future<void> ensureLoaded() async {
+    if (_loaded) return;
+    final done = Completer<void>();
+    void check() {
+      if (_loaded && !done.isCompleted) done.complete();
+    }
+    addListener(check);
+    await done.future;
+    removeListener(check);
   }
 
   Future<void> addAll(List<Expense> list) async {
@@ -100,7 +120,7 @@ class ExpenseStore extends ChangeNotifier {
   }
 
   /// Desfaz uma exclusão, recriando o lançamento (com novo id).
-  Future<void> restore(Expense e) => add(e.copyWith());
+  Future<Expense> restore(Expense e) => add(e.copyWith());
 
   // ---------------------------------------------------------------- recorrentes
 

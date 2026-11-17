@@ -4,6 +4,11 @@ App Android para controlar gastos pessoais. **Funciona 100% offline**: os dados 
 
 ## O que faz
 
+- **Lançar a partir do comprovante**: no app do banco (ou WhatsApp, galeria, e-mail) toque em
+  *Compartilhar → Despesas*, ou use o botão de scanner na tela inicial (foto, print ou PDF).
+  O app lê o comprovante no próprio celular (sem internet), entende valor, data, quem recebeu/pagou,
+  se é Pix enviado ou recebido, sugere a categoria e lança sozinho. A imagem fica guardada no lançamento.
+  Se não achar o valor ou parecer repetido, abre o formulário preenchido para você conferir.
 - Lançar **gastos e receitas** com valor, descrição, data, categoria e observação
 - **Saldo do mês** (receitas − gastos) e comparação com o mês anterior
 - **Lançamentos recorrentes** (aluguel, assinaturas, salário): criados sozinhos todo mês

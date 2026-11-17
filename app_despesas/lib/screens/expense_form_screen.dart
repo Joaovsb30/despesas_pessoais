@@ -5,6 +5,7 @@ import '../models/category.dart';
 import '../models/expense.dart';
 import '../state/expense_store.dart';
 import '../utils/money.dart';
+import 'receipt_viewer_screen.dart';
 
 enum Repeat { none, monthly, installments }
 
@@ -13,11 +14,19 @@ class ExpenseFormScreen extends StatefulWidget {
   final Expense? expense;
   final DateTime initialDate;
 
+  /// Novo lançamento já preenchido (ex.: lido de um comprovante), ainda não salvo.
+  final Expense? draft;
+
+  /// Aviso mostrado no topo (ex.: por que o comprovante precisa de revisão).
+  final String? notice;
+
   const ExpenseFormScreen({
     super.key,
     required this.store,
     this.expense,
     required this.initialDate,
+    this.draft,
+    this.notice,
   });
 
   @override
@@ -38,12 +47,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
   bool get _editing => widget.expense != null;
 
+  String? get _receiptPath => (widget.expense ?? widget.draft)?.receiptPath;
+
   @override
   void initState() {
     super.initState();
-    final e = widget.expense;
+    final e = widget.expense ?? widget.draft;
     _title = TextEditingController(text: e?.title ?? '');
-    _amount = TextEditingController(text: e == null ? '' : centsToInput(e.amountCents));
+    _amount = TextEditingController(text: e == null || e.amountCents == 0 ? '' : centsToInput(e.amountCents));
     _note = TextEditingController(text: e?.note ?? '');
     _date = e?.date ?? widget.initialDate;
     _isIncome = e?.isIncome ?? false;
@@ -98,6 +109,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       note: note.isEmpty ? null : note,
       isIncome: _isIncome,
       recurringId: widget.expense?.recurringId,
+      receiptPath: _receiptPath,
     );
     final store = widget.store;
     if (_editing) {
@@ -156,6 +168,25 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.notice != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: theme.colorScheme.onTertiaryContainer),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(widget.notice!,
+                          style: TextStyle(color: theme.colorScheme.onTertiaryContainer)),
+                    ),
+                  ],
+                ),
+              ),
             SegmentedButton<bool>(
               segments: const [
                 ButtonSegment(value: false, label: Text('Despesa'), icon: Icon(Icons.arrow_downward)),
@@ -275,6 +306,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 child: Text(
                   'Lançamento recorrente: alterar aqui muda só este mês.',
                   style: theme.textTheme.bodySmall,
+                ),
+              ),
+            if (_receiptPath != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('Ver comprovante'),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => ReceiptViewerScreen(path: _receiptPath!),
+                  )),
                 ),
               ),
             const SizedBox(height: 16),

@@ -142,6 +142,10 @@ class ExpenseTile extends StatelessWidget {
       title: Row(
         children: [
           Flexible(child: Text(expense.title, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          if (expense.receiptPath != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.receipt_long, size: 14, color: theme.colorScheme.outline),
+          ],
           if (expense.recurringId != null) ...[
             const SizedBox(width: 4),
             Icon(Icons.autorenew, size: 14, color: theme.colorScheme.outline),
