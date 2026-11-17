@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "br.com.despesas.expenses"
-    compileSdk = flutter.compileSdkVersion
+    // 37: exigido pelo receive_sharing_intent (só compilação; targetSdk continua o padrão do Flutter)
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
